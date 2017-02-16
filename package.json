@@ -1,0 +1,25 @@
+{
+  "name": "rrb-vector",
+  "version": "0.0.1",
+  "description": "JS RRB Tree based immutable vector",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "node tests/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wshager/js-rrb-vector.git"
+  },
+  "author": "W.S. Hager",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wshager/js-rrb-vector/issues"
+  },
+  "homepage": "https://github.com/wshager/js-rrb-vector#readme",
+  "dependencies": {
+  },
+  "devDependencies": {
+      "babel-cli": "^6.18.0",
+      "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0"
+  }
+}
