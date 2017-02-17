@@ -1,6 +1,7 @@
 import { nodeCopy, parentise, siblise, isLeaf, getSlot, length } from "./util";
 
 export function sliceRoot(list, from, to) {
+	if(to === undefined) to = length(list);
 	return sliceLeft(from, sliceRight(to, list));
 }
 
@@ -21,7 +22,7 @@ function sliceLeft(from, list) {
 	// Maybe the a node is not even needed, as sliced contains the whole slice.
 	if (left === list.length - 1) {
 		// elevate!
-		return parentise(sliced,list.height);
+		return sliced.height < list.height ? parentise(sliced,list.height) : sliced;
 	}
 
 	// Create new node.
