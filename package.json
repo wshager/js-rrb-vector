@@ -1,6 +1,6 @@
 {
   "name": "rrb-vector",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "JS RRB Tree based immutable vector",
   "main": "./lib/index.js",
   "scripts": {

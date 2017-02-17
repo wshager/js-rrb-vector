@@ -115,7 +115,7 @@ function slice_concat(a,x,len){
     var z = rrb.concat(y1,y2);
     for(let i = 0; i < c.length; i++) {
         if(c[i] !== rrb.get(z,i)) {
-            throw new Error(`Slice at index ${i}: ${rrb.get(z,i)} !== ${c[i]}`);
+            throw new Error(`Slice/concat at index ${i}: ${rrb.get(z,i)} !== ${c[i]}`);
         }
     }
     return [c,z];
