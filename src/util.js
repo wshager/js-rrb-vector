@@ -145,12 +145,13 @@ export function getSlot(i, list) {
 	return slot;
 }
 
-export function rootToArray(a,out){
+export function rootToArray(a,out = []){
 	for (var i = 0; i < a.length; i++) {
-	  if(a.height === 0){
-		  out.push(a[i]);
-	  } else {
-		  rootToArray(a[i],out);
-	  }
+		if(a.height === 0){
+			out.push(a[i]);
+		} else {
+			rootToArray(a[i],out);
+		}
 	}
+	return out;
 }
