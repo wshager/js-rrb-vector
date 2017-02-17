@@ -111,14 +111,19 @@ function concat(a, b) {
 			let rightCut = M - aTailLen;
 			// create a new tail by concatting b until cut
 			let newTail = a.tail.concat(b.tail.slice(0,rightCut));
-			let newRoot = a.root;
+			newTail.height = 0;
+			let newRoot;
 			// if tail would overflow, sink it and make leftover newTail
 			if(aTailLen + bTailLen > M) {
 				newRoot = sinkTailIfSpace(newTail,a.root);
 				newTail = b.tail.slice(rightCut);
+				newTail.height = 0;
+			} else {
+				newRoot = a.root.slice(0);
+				newRoot.sizes = a.root.sizes.slice(0);
+				newRoot.height = a.root.height;
 			}
-			newTail.height = 0;
-			return new Tree(newLen,newRoot,newTail);
+			return new Tree(newLen, newRoot, newTail);
 		}
 		// else a has no root
 		// make a.tail a.root and concat b.root
@@ -127,8 +132,8 @@ function concat(a, b) {
 		return new Tree(newLen,newRoot,newTail);
 	} else {
 		// both a and b have roots
-		// just sink a.tail and make b.tail new tail...
-		let aRoot = sinkTailIfSpace(a.tail, a.root)|| siblise(a.root, parentise(a.tail,a.root.height));
+		// if have a.tail, just sink a.tail and make b.tail new tail...
+		let aRoot = a.tail.length === 0 ? a.root : sinkTailIfSpace(a.tail, a.root)|| siblise(a.root, parentise(a.tail,a.root.height));
 		let newRoot = concatRoot(aRoot,b.root);
 		let newTail = createLeafFrom(b.tail);
 		return new Tree(newLen,newRoot,newTail);
@@ -160,14 +165,17 @@ function slice(tree,from,to){
 	}
 	from = confine(from);
 	to = confine(to);
-	var offset = tailOffset(tree);
-	if(from >= offset) {
-		let newTail = tree.tail.slice(from - offset,to - offset);
-		newTail.height = 0;
-		return new Tree(to - from, null, newTail);
+	var offset = tailOffset(tree);	var newRoot, newTail;
+	if (from >= offset) {
+		newRoot = null;
+		newTail = tree.tail.slice(from - offset, to - offset);
+	} else if(to <= offset) {
+		newRoot = sliceRoot(tree.root, from, to);
+		newTail = [];
+	} else {
+		newRoot = sliceRoot(tree.root, from, offset);
+		newTail = tree.tail.slice(0, to - offset);
 	}
-	let newRoot = sliceRoot(tree.root,from,offset);
-	let newTail = tree.tail.slice(0,to - offset);
 	newTail.height = 0;
 	return new Tree(to - from, newRoot, newTail);
 }
@@ -180,10 +188,42 @@ function toArray(tree) {
 	}
     return out.concat(tree.tail);
 }
+function fromArray(jsArray) {
+	var len = jsArray.length;
+	if (len === 0)
+		return EMPTY;
+
+	return _fromArray(jsArray, Math.floor(Math.log(len) / Math.log(M)), 0, len);
+
+	function _fromArray(jsArray, h, from, to) {
+		if (h === 0) {
+			var node = sliceRoot(createLeafFrom(jsArray),from, to);
+			node.height = 0;
+			return node;
+		}
+
+		var step = Math.pow(M, h);
+		var len = Math.ceil((to - from) / step);
+		var table = new Array(len);
+		var lengths = new Array(len);
+		for (var i = 0; len > i; i++) {
+			//todo: trampoline?
+			table[i] = _fromArray(jsArray, h - 1, from + (i * step), Math.min(from + ((i + 1) * step), to));
+			lengths[i] = length(table[i]) + (i > 0 ? lengths[i - 1] : 0);
+		}
+		table.height = h;
+		table.sizes = lengths;
+		return table;
+	}
+
+}
 
 var rrb = {
 	empty:EMPTY,
 	toArray:toArray,
+	fromArray:fromArray,
+	concatRoot:concatRoot,
+	sliceRoot:sliceRoot,
 	concat:concat,
 	push:push,
 	slice:slice,
