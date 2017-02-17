@@ -7,10 +7,11 @@ export function concatRoot(a,b){
 	var a2Len = a2.length;
 	var b2Len = b2.length;
 
+	if (a2Len === 0) return b2;
+	if (b2Len === 0) return a2;
+
 	// Check if both nodes can be crunched together.
 	if (a2Len + b2Len <= M) {
-		if (a2Len === 0) return b2;
-		if (b2Len === 0) return a2;
 		var a2Height = a2.height;
 		var a2Sizes = a2.sizes;
 		var b2Height = b2.height;
@@ -37,6 +38,7 @@ export function concatRoot(a,b){
 			b2 = tuple[1];
 		}
 	}
+
 	return siblise(a2, b2);
 }
 
@@ -131,14 +133,30 @@ function insertLeft(parent, node) {
  */
 function shuffle(a, b, toRemove) {
 	var newA = allocate(a.height, Math.min(M, a.length + b.length - toRemove));
-	var newB = allocate(a.height, newA.length - (a.length + b.length - toRemove));
+	var newB = allocate(a.height, Math.max(0,newA.length - (a.length + b.length - toRemove)));
 
 	// Skip the slots with size M. More precise: copy the slot references
 	// to the new node
 	var read = 0;
-	while (tableOf(getEither(a, a, read)).length % M === 0) {
-		setEither(newA, newB, read, getEither(a, b, read));
-		setEither(newA.sizes, newB.sizes, read, getEither(a.sizes, b.sizes, read));
+	let aLen = a.length;
+	let either, fromA;
+	let newALen = newA.length;
+	while ((fromA = read < aLen, either = fromA ? a[read] : b[read - aLen],either.length % M === 0)) {
+		let fromNewA = read < newALen;
+		if(fromNewA) {
+			newA[read] = either;
+		} else {
+			newB[read - newALen] = either;
+		}
+		let size = fromNewA ? a.sizes[read] : b.sizes[read - newALen];
+		if(!size) {
+			size = newA.sizes[read - 1] + length(either);
+		}
+		if(fromNewA) {
+			newA.sizes[read] = size;
+		} else {
+			newB.sizes[read - newALen] = size;
+		}
 		read++;
 	}
 
@@ -150,17 +168,18 @@ function shuffle(a, b, toRemove) {
 
 	// If the current slot is still containing data, then there will be at
 	// least one more write, so we do not break this loop yet.
-	while (read - write - (slot.length > 0 ? 1 : 0) < toRemove) {
+	while (read - write - (slot.length > 0 ? 1 : 0) < toRemove && read - a.length < b.length) {
 		// Find out the max possible items for copying.
 		var source = getEither(a, b, read);
 		var to = Math.min(M - slot.length, source.length);
 
 		// Copy and adjust size table.
-		var height = slot.height, sizes = slot.sizes.slice(0);
+		var height = slot.height,
+			sizes = height === 0 ? null : slot.sizes.slice(0);
 		slot = slot.concat(source.slice(from, to));
 		slot.height = height;
-		slot.sizes = sizes;
 		if (slot.height > 0) {
+			slot.sizes = sizes;
 			var len = sizes.length;
 			for (var i = len; i < len + to - from; i++) {
 				sizes[i] = length(slot[i]);
@@ -223,7 +242,7 @@ function saveSlot(aList, bList, index, slot) {
 	setEither(aList, bList, index, slot);
 
 	var isInFirst = (index === 0 || index === aList.sizes.length);
-	var len = isInFirst ? 0 : getEither(aList.sizes, aList.sizes, index - 1);
+	var len = isInFirst ? 0 : getEither(aList.sizes, bList.sizes, index - 1);
 
 	setEither(aList.sizes, bList.sizes, index, len + length(slot));
 }
