@@ -2,8 +2,9 @@
   "name": "rrb-vector",
   "version": "0.0.4",
   "description": "JS RRB Tree based immutable vector",
-  "main": "./lib/index.js",
+  "main": "./lib/transient.js",
   "scripts": {
+    "build": "babel src --out-dir lib && browserify lib/index.js -s amd > dist/index.js && browserify lib/transient.js -s amd > dist/transient.js",
     "test": "node tests/index.js"
   },
   "repository": {
@@ -16,10 +17,10 @@
     "url": "https://github.com/wshager/js-rrb-vector/issues"
   },
   "homepage": "https://github.com/wshager/js-rrb-vector#readme",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
-      "babel-cli": "^6.18.0",
-      "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0"
+    "babel-cli": "^6.18.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
+    "browserify": "^14.1.0"
   }
 }
