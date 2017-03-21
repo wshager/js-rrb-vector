@@ -1,4 +1,4 @@
-import { nodeCopy, parentise, siblise, isLeaf, getSlot, length } from "./util";
+import { parentise, isLeaf, getSlot, length } from "./util";
 
 export function sliceRoot(list, from, to) {
 	if(to === undefined) to = length(list);

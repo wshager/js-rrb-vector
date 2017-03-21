@@ -8,9 +8,10 @@ export function createRoot(tail){
 	return list;
 }
 
-export function nodeCopy(list){
+export function nodeCopy(list,mutate){
 	var height = list.height;
 	if(height===0) return createLeafFrom(list);
+	if(mutate) return list;
 	var sizes = list.sizes.slice(0);
 	list = list.slice(0);
 	list.height = height;
@@ -28,12 +29,12 @@ export function tailOffset(tree){
 	return tree.root ? length(tree.root) : 0;
 }
 
-export function sinkTailIfSpace(tail,list){
+export function sinkTailIfSpace(tail,list,mutate){
 	// Handle resursion stop at leaf level.
     var newA, tailLen = tail.length;
 	if (list.height == 1) {
       if (list.length < M) {
-        newA = nodeCopy(list);
+        newA = nodeCopy(list,mutate);
         newA.push(tail);
 		newA.sizes.push(last(newA.sizes)+tail.length);
         return newA;
@@ -43,7 +44,7 @@ export function sinkTailIfSpace(tail,list){
     }
 
     // Recursively push
-    var pushed = sinkTailIfSpace(tail, last(list));
+    var pushed = sinkTailIfSpace(tail, last(list), mutate);
 
     // There was space in the bottom right tree, so the slot will
     // be updated.
@@ -59,7 +60,7 @@ export function sinkTailIfSpace(tail,list){
     // at the bottom.
     if (list.length < M) {
 		var newSlot = parentise(tail, list.height - 1);
-		newA = nodeCopy(list);
+		newA = nodeCopy(list, mutate);
 		newA.push(newSlot);
 		newA.sizes.push(last(newA.sizes) + length(newSlot));
 		return newA;
@@ -84,9 +85,9 @@ export function getRoot(i, list) {
   return list[i];
 }
 
-export function setRoot(i, item, list){
+export function setRoot(i, item, list, mutate){
 	var len = length(list);
-	list = nodeCopy(list);
+	list = nodeCopy(list, mutate);
 	if (isLeaf(list)) {
 		list[i] = item;
 	} else {
@@ -94,7 +95,7 @@ export function setRoot(i, item, list){
 		if (slot > 0) {
 			i -= list.sizes[slot - 1];
 		}
-		list[slot] = setRoot(i, item, list[slot]);
+		list[slot] = setRoot(i, item, list[slot], mutate);
 	}
 	return list;
 }

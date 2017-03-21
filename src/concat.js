@@ -1,8 +1,8 @@
 import { M,E } from "./const";
 import { nodeCopy, parentise, siblise, last, first, length } from "./util";
 
-export function concatRoot(a,b){
-	var tuple = _concat(a, b);
+export function concatRoot(a,b, mutate){
+	var tuple = _concat(a, b, mutate);
 	var a2 = tuple[0], b2 = tuple[1];
 	var a2Len = a2.length;
 	var b2Len = b2.length;
@@ -49,7 +49,7 @@ export function concatRoot(a,b){
  * @return {Array<Node>}
  * @private
  */
-function _concat(a, b) {
+function _concat(a, b, mutate) {
 	var aHeight = a.height;
 	var bHeight = b.height;
 
@@ -59,23 +59,23 @@ function _concat(a, b) {
 
 	if (aHeight !== 1 || bHeight !== 1) {
 		if (aHeight === bHeight) {
-			a = nodeCopy(a);
-			b = nodeCopy(b);
-			let tuple  = _concat(last(a), first(b));
+			a = nodeCopy(a, mutate);
+			b = nodeCopy(b, mutate);
+			let tuple  = _concat(last(a), first(b), mutate);
 			let a0 = tuple[0];
 			let b0 = tuple[1];
 			insertRight(a, a0);
 			insertLeft(b, b0);
 		} else if (aHeight > bHeight) {
-			a = nodeCopy(a);
-			let tuple = _concat(last(a), b);
+			a = nodeCopy(a, mutate);
+			let tuple = _concat(last(a), b, mutate);
 			let a0 = tuple[0];
 			let b0 = tuple[1];
 			insertRight(a, a0);
 			b = parentise(b0, b0.height + 1);
 		} else {
-			b = nodeCopy(b);
-			var tuple = _concat(a, first(b));
+			b = nodeCopy(b, mutate);
+			var tuple = _concat(a, first(b), mutate);
 			var left = tuple[0].length === 0 ? 0 : 1;
 			var right = left === 0 ? 1 : 0;
 			insertLeft(b, tuple[left]);

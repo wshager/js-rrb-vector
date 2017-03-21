@@ -21,26 +21,36 @@ import { sliceRoot } from "./slice";
 const EMPTY_LEAF = [];
 EMPTY_LEAF.height = 0;
 
-export function Tree(size,root,tail){
+export function Tree(size,root,tail,editable){
 	this.size = size;
 	this.root = root;
 	this.tail = tail;
+	this.editable = editable;
 }
 
-const EMPTY = new Tree(0,null,EMPTY_LEAF);
+const EMPTY = new Tree(0, null, EMPTY_LEAF, false);
+
+const canEditNode = (edit, node) => edit === node.edit;
 
 export function push(tree, val) {
 	if (tree.tail.length < M) { // push to tail
-		let newTail = createLeafFrom(tree.tail);
+		let newTail = createLeafFrom(tree.tail, tree.editable);
 		newTail.push(val);
-		return new Tree(tree.size+1,tree.root,newTail);
+		tree.size++;
+		if(!tree.editable) return new Tree(tree.size,tree.root,newTail);
+		tree.tail = newTail;
+		return tree;
 	}
 	// else push to root if space
 	// else create new root
 	let newTail = [val];
 	newTail.height = 0;
-	let newRoot = tree.root ? sinkTailIfSpace(tree.tail, tree.root) || siblise(tree.root, parentise(tree.tail,tree.root.height)) : parentise(tree.tail,1);
-	return new Tree(tree.size+1, newRoot, newTail);
+	let newRoot = tree.root ? sinkTailIfSpace(tree.tail, tree.root, tree.editable) || siblise(tree.root, parentise(tree.tail,tree.root.height)) : parentise(tree.tail,1);
+	tree.size++;
+	if(!tree.editable) return new Tree(tree.size, newRoot, newTail);
+	tree.root = newRoot;
+	tree.tail = newTail;
+	return tree;
 }
 
 // Gets the value at index i recursively.
@@ -53,7 +63,7 @@ export function get(tree, i) {
 		return tree.tail[i - offset];
 	}
     return getRoot(i, tree.root);
-  }
+}
 
 // Sets the value at the index i. Only the nodes leading to i will get
 // copied and updated.
@@ -62,15 +72,19 @@ export function set(tree, i, item) {
     if (i < 0 || len < i) {
         throw new Error("Index "+ i +" out of range!");
 	}
-    if(i === len) return push(item, tree);
+    if(i === len) return push(tree, item);
 	var offset = tailOffset(tree);
 	if(i >= offset){
-		var newTail = createLeafFrom(tree.tail);
+		var newTail = createLeafFrom(tree.tail, tree.editable);
 		newTail[i - offset] = item;
-		return new Tree(tree.size,tree.root,newTail);
+		if(!tree.editable) return new Tree(tree.size,tree.root,newTail);
+		tree.tail = newTail;
+		return tree;
 	}
-    var newRoot = setRoot(i, item, tree.root);
-	return new Tree(tree.size,newRoot,tree.tail);
+    var newRoot = setRoot(i, item, tree.root, tree.editable);
+	if(!tree.editable) return new Tree(tree.size,newRoot,tree.tail);
+	tree.root = newRoot;
+	return tree;
 }
 
 /**
@@ -92,7 +106,11 @@ export function concat(a, b) {
 		if(aLen + bLen <= M) {
 			let newTail = a.tail.concat(b.tail);
 			newTail.height = 0;
-			return new Tree(newLen,null,newTail);
+			if(!a.editable) return new Tree(newLen,null,newTail);
+			a.size = newLen;
+			a.root = null;
+			a.tail = newTail;
+			return a;
 		}
 		if(!a.root && !b.root){
 			// newTail will overflow, but newRoot can't be over M
@@ -100,7 +118,11 @@ export function concat(a, b) {
 			newRoot.height = 0;
 			let newTail = b.tail.slice(M - aLen);
 			newTail.height = 0;
-			return new Tree(newLen,newRoot,newTail);
+			if(!a.editable) return new Tree(newLen,newRoot,newTail);
+			a.size = newLen;
+			a.root = newRoot;
+			a.tail = newTail;
+			return a;
 		}
 		// else either a has a root or b does
 		if(!b.root) {
@@ -115,7 +137,7 @@ export function concat(a, b) {
 			let newRoot;
 			// if tail would overflow, sink it and make leftover newTail
 			if(aTailLen + bTailLen > M) {
-				newRoot = sinkTailIfSpace(newTail,a.root);
+				newRoot = sinkTailIfSpace(newTail,a.root, a.editable);
 				newTail = b.tail.slice(rightCut);
 				newTail.height = 0;
 			} else {
@@ -123,20 +145,32 @@ export function concat(a, b) {
 				newRoot.sizes = a.root.sizes.slice(0);
 				newRoot.height = a.root.height;
 			}
-			return new Tree(newLen, newRoot, newTail);
+			if(!a.editable) return new Tree(newLen, newRoot, newTail);
+			a.size = newLen;
+			a.root = newRoot;
+			a.tail = newTail;
+			return a;
 		}
 		// else a has no root
 		// make a.tail a.root and concat b.root
-		let newRoot = concatRoot(parentise(a.tail,1),b.root);
-		let newTail = createLeafFrom(b.tail);
-		return new Tree(newLen,newRoot,newTail);
+		let newRoot = concatRoot(parentise(a.tail,1),b.root, a.editable);
+		let newTail = createLeafFrom(b.tail, a.editable);
+		if(!a.editable) return new Tree(newLen,newRoot,newTail);
+		a.size = newLen;
+		a.root = newRoot;
+		a.tail = newTail;
+		return a;
 	} else {
 		// both a and b have roots
 		// if have a.tail, just sink a.tail and make b.tail new tail...
-		let aRoot = a.tail.length === 0 ? a.root : sinkTailIfSpace(a.tail, a.root)|| siblise(a.root, parentise(a.tail,a.root.height));
-		let newRoot = concatRoot(aRoot,b.root);
-		let newTail = createLeafFrom(b.tail);
-		return new Tree(newLen,newRoot,newTail);
+		let aRoot = a.tail.length === 0 ? a.root : sinkTailIfSpace(a.tail, a.root, a.editable) || siblise(a.root, parentise(a.tail,a.root.height));
+		let newRoot = concatRoot(aRoot,b.root, a.editable);
+		let newTail = createLeafFrom(b.tail, a.editable);
+		if(!a.editable) return new Tree(newLen,newRoot,newTail);
+		a.size = newLen;
+		a.root = newRoot;
+		a.tail = newTail;
+		return a;
 	}
 }
 
@@ -242,4 +276,25 @@ Tree.prototype.concat = function(other){
 
 Tree.prototype.slice = function(from,to){
 	return slice(this,from,to);
+};
+
+Tree.prototype.beginMutation = function(){
+	return new Tree(this.size,this.root,this.tail,true);
+};
+
+Tree.prototype.endMutation = function(){
+	this.editable = false;
+	return this;
+};
+
+Tree.prototype.count = function(){
+	return this.size;
+};
+
+Tree.prototype.first = function(){
+	return this.get(0);
+};
+
+Tree.prototype.next = function(idx){
+	return this.get(idx+1);
 };
