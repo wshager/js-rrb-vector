@@ -5,8 +5,6 @@ const RUN = 999;
 run();
 //test_slice(25);
 
-//console.log(createArray(8))
-
 function createArray(size){
     var arr = [];
     var x = rrb.empty;
@@ -35,8 +33,11 @@ function setup(){
                 console.log("Concat verified");
                 if(test_slice(len)){
                     console.log("Slice verified");
-                    if(test_slice_concat(len)) {
-                        console.log("Slice+concat verified");
+                    if(test_splice1(len)) {
+                        console.log("Splice1 verified");
+                        if(test_slice_concat(len)) {
+                            console.log("Slice+concat verified");
+                        }
                     }
                 }
             }
@@ -61,7 +62,7 @@ function test_set(len){
     z = rrb.set(z,rand,"test");
     for(let i = 0; i < c.length; i++) {
         if(c[i] !== rrb.get(z,i)) {
-            throw new Error(`Push at index ${i}: ${rrb.get(z,i)} !== ${c[i]}`);
+            throw new Error(`Set at index ${i}: ${rrb.get(z,i)} !== ${c[i]}`);
         }
     }
     return true;
@@ -127,6 +128,21 @@ function test_slice_concat(len) {
     // just repeat cnt times
     var cnt = len;
     while(cnt>0) [c,z] = slice_concat(c,z,len,cnt--);
+    return true;
+}
+
+
+function test_splice1(len) {
+    var [c,x] = createArray(len);
+    var cut = Math.floor(Math.random() * len/2);
+    console.log(cut);
+    c.splice(cut,1);
+    var z = rrb.concat(rrb.slice(x,0,cut),rrb.slice(x,cut+1));
+    for(let i = 0; i < c.length; i++) {
+        if(c[i] !== rrb.get(z,i)) {
+            throw new Error(`Splice1 at index ${i}: ${rrb.get(z,i)} !== ${c[i]}`);
+        }
+    }
     return true;
 }
 
