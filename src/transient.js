@@ -37,8 +37,8 @@ export function push(tree, val) {
 	if (tree.tail.length < M) { // push to tail
 		let newTail = createLeafFrom(tree.tail, tree.editable);
 		newTail.push(val);
+		if(!tree.editable) return new Tree(tree.size + 1,tree.root,newTail);
 		tree.size++;
-		if(!tree.editable) return new Tree(tree.size,tree.root,newTail);
 		tree.tail = newTail;
 		return tree;
 	}
@@ -47,8 +47,8 @@ export function push(tree, val) {
 	let newTail = [val];
 	newTail.height = 0;
 	let newRoot = tree.root ? sinkTailIfSpace(tree.tail, tree.root, tree.editable) || siblise(tree.root, parentise(tree.tail,tree.root.height)) : parentise(tree.tail,1);
+	if(!tree.editable) return new Tree(tree.size + 1, newRoot, newTail);
 	tree.size++;
-	if(!tree.editable) return new Tree(tree.size, newRoot, newTail);
 	tree.root = newRoot;
 	tree.tail = newTail;
 	return tree;
@@ -321,9 +321,9 @@ const DONE = {
 };
 
 TreeIterator.prototype.next = function () {
+	if(this.i==this.tree.size) return DONE;
     var v = this.tree.get(this.i);
 	this.i++;
-	if(this.i==this.tree.size) return DONE;
     return {value:v};
 };
 
