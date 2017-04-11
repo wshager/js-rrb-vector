@@ -1,6 +1,6 @@
 {
   "name": "rrb-vector",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "JS RRB Tree based immutable vector",
   "main": "./lib/transient.js",
   "scripts": {

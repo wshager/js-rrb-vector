@@ -421,8 +421,8 @@ function push(tree, val) {
 		// push to tail
 		let newTail = (0, _util.createLeafFrom)(tree.tail, tree.editable);
 		newTail.push(val);
+		if (!tree.editable) return new Tree(tree.size + 1, tree.root, newTail);
 		tree.size++;
-		if (!tree.editable) return new Tree(tree.size, tree.root, newTail);
 		tree.tail = newTail;
 		return tree;
 	}
@@ -431,8 +431,8 @@ function push(tree, val) {
 	let newTail = [val];
 	newTail.height = 0;
 	let newRoot = tree.root ? (0, _util.sinkTailIfSpace)(tree.tail, tree.root, tree.editable) || (0, _util.siblise)(tree.root, (0, _util.parentise)(tree.tail, tree.root.height)) : (0, _util.parentise)(tree.tail, 1);
+	if (!tree.editable) return new Tree(tree.size + 1, newRoot, newTail);
 	tree.size++;
-	if (!tree.editable) return new Tree(tree.size, newRoot, newTail);
 	tree.root = newRoot;
 	tree.tail = newTail;
 	return tree;
