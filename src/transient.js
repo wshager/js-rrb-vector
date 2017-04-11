@@ -224,18 +224,8 @@ export function toArray(tree) {
 }
 export function fromArray(jsArray) {
 	var len = jsArray.length;
-	if (len === 0)
-		return EMPTY;
-
-	return _fromArray(jsArray, Math.floor(Math.log(len) / Math.log(M)), 0, len);
-
+	if (len === 0) return EMPTY;
 	function _fromArray(jsArray, h, from, to) {
-		if (h === 0) {
-			var node = sliceRoot(createLeafFrom(jsArray),from, to);
-			node.height = 0;
-			return node;
-		}
-
 		var step = Math.pow(M, h);
 		var len = Math.ceil((to - from) / step);
 		var table = new Array(len);
@@ -250,6 +240,17 @@ export function fromArray(jsArray) {
 		return table;
 	}
 
+	var h = Math.floor(Math.log(len) / Math.log(M));
+	var root,tail;
+	if (h === 0) {
+		tail = sliceRoot(createLeafFrom(jsArray),0, len);
+		root = null;
+		tail.height = 0;
+	} else {
+		tail = EMPTY_LEAF;
+		root = _fromArray(jsArray, h, 0, len);
+	}
+	return new Tree(len,root,tail,false);
 }
 
 export { EMPTY as empty };

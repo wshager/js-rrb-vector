@@ -1,9 +1,15 @@
 var rrb = require("../lib/index");
 var util = require("../lib/util");
+var slice = require("../lib/slice");
+var push = require("../tests/push").pushItem;
 const SIZE = 200;
 const RUN = 99999;
 
-run();
+//run();
+//
+var [c,x] = createArray(16);
+var y = push("bla",x);
+console.log(x,y);
 
 function getRoot(i, list) {
 	for (var x = list.height; x > 0; x--) {
