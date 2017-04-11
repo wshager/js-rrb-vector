@@ -12,7 +12,8 @@ import { createRoot,
 	first,
 	isLeaf,
 	length,
-	getSlot } from "./util";
+	getSlot,
+ 	rootToArray } from "./util";
 import { concatRoot } from "./concat";
 import { sliceRoot } from "./slice";
 
@@ -230,27 +231,33 @@ export function fromArray(jsArray) {
 		var len = Math.ceil((to - from) / step);
 		var table = new Array(len);
 		var lengths = new Array(len);
-		for (var i = 0; len > i; i++) {
+		for (let i = 0; i < len; i++) {
 			//todo: trampoline?
-			table[i] = _fromArray(jsArray, h - 1, from + (i * step), Math.min(from + ((i + 1) * step), to));
+			if(h < 1) {
+				break;
+			}
+			table[i] =  _fromArray(jsArray, h - 1, from + i * step, Math.min(from + (i + 1) * step, to));
 			lengths[i] = length(table[i]) + (i > 0 ? lengths[i - 1] : 0);
 		}
 		table.height = h;
-		table.sizes = lengths;
+		if(h < 1){
+			for(let i = from; i < to; i++) table[i - from] = jsArray[i];
+		} else {
+			table.sizes = lengths;
+		}
 		return table;
 	}
-
 	var h = Math.floor(Math.log(len) / Math.log(M));
 	var root,tail;
 	if (h === 0) {
-		tail = sliceRoot(createLeafFrom(jsArray),0, len);
+		tail = createLeafFrom(jsArray);
 		root = null;
-		tail.height = 0;
 	} else {
-		tail = EMPTY_LEAF;
+		tail = [];
+		tail.height = 0;
 		root = _fromArray(jsArray, h, 0, len);
 	}
-	return new Tree(len,root,tail,false);
+	return new Tree(len, root, tail, false);
 }
 
 export { EMPTY as empty };
@@ -298,4 +305,32 @@ Tree.prototype.first = function(){
 
 Tree.prototype.next = function(idx){
 	return this.get(idx+1);
+};
+
+Tree.prototype.toJS = function(idx){
+	return toArray(this);
+};
+
+export function TreeIterator(tree) {
+    this.tree = tree;
+	this.i = 0;
+}
+
+const DONE = {
+    done: true
+};
+
+TreeIterator.prototype.next = function () {
+    var v = this.tree.get(this.i);
+	this.i++;
+	if(this.i==this.tree.size) return DONE;
+    return {value:v};
+};
+
+TreeIterator.prototype[Symbol.iterator] = function () {
+    return this;
+};
+
+Tree.prototype[Symbol.iterator] = function () {
+    return new TreeIterator(this);
 };
