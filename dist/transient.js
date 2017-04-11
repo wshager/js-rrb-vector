@@ -390,6 +390,7 @@ exports.concat = concat;
 exports.slice = slice;
 exports.toArray = toArray;
 exports.fromArray = fromArray;
+exports.TreeIterator = TreeIterator;
 
 var _const = require("./const");
 
@@ -602,7 +603,7 @@ function slice(tree, from, to) {
 function toArray(tree) {
 	var out = [];
 	if (tree.root) {
-		rootToArray(tree.root, out);
+		(0, _util.rootToArray)(tree.root, out);
 	}
 	return out.concat(tree.tail);
 }
@@ -614,24 +615,30 @@ function fromArray(jsArray) {
 		var len = Math.ceil((to - from) / step);
 		var table = new Array(len);
 		var lengths = new Array(len);
-		for (var i = 0; len > i; i++) {
+		for (let i = 0; i < len; i++) {
 			//todo: trampoline?
+			if (h < 1) {
+				break;
+			}
 			table[i] = _fromArray(jsArray, h - 1, from + i * step, Math.min(from + (i + 1) * step, to));
 			lengths[i] = (0, _util.length)(table[i]) + (i > 0 ? lengths[i - 1] : 0);
 		}
 		table.height = h;
-		table.sizes = lengths;
+		if (h < 1) {
+			for (let i = from; i < to; i++) table[i - from] = jsArray[i];
+		} else {
+			table.sizes = lengths;
+		}
 		return table;
 	}
-
 	var h = Math.floor(Math.log(len) / Math.log(_const.M));
-	var tail;
+	var root, tail;
 	if (h === 0) {
-		tail = (0, _slice.sliceRoot)((0, _util.createLeafFrom)(jsArray), 0, len);
+		tail = (0, _util.createLeafFrom)(jsArray);
 		root = null;
-		tail.height = 0;
 	} else {
-		tail = EMPTY_LEAF;
+		tail = [];
+		tail.height = 0;
 		root = _fromArray(jsArray, h, 0, len);
 	}
 	return new Tree(len, root, tail, false);
@@ -683,6 +690,34 @@ Tree.prototype.first = function () {
 
 Tree.prototype.next = function (idx) {
 	return this.get(idx + 1);
+};
+
+Tree.prototype.toJS = function (idx) {
+	return toArray(this);
+};
+
+function TreeIterator(tree) {
+	this.tree = tree;
+	this.i = 0;
+}
+
+const DONE = {
+	done: true
+};
+
+TreeIterator.prototype.next = function () {
+	if (this.i == this.tree.size) return DONE;
+	var v = this.tree.get(this.i);
+	this.i++;
+	return { value: v };
+};
+
+TreeIterator.prototype[Symbol.iterator] = function () {
+	return this;
+};
+
+Tree.prototype[Symbol.iterator] = function () {
+	return new TreeIterator(this);
 };
 },{"./concat":1,"./const":2,"./slice":3,"./util":5}],5:[function(require,module,exports){
 "use strict";
